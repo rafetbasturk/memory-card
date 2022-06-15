@@ -1,24 +1,64 @@
-import logo from './logo.svg';
-import './App.css';
+import { useGlobalContext } from "./context";
+import { useState } from "react";
+import Header from "./components/Header";
+import Main from "./components/Main";
+import Footer from "./components/Footer";
+import Modal from "./components/Modal";
+import { shuffle, checkIfIncludes } from "./helper";
+
+const modalInitialState = { message: "Next Level", className: "success", button: "Continue" }
 
 function App() {
+  const { isLoading, images, level, setLevel } = useGlobalContext()
+  const [selected, setSelected] = useState([]);
+  const [score, setScore] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modal, setModal] = useState(modalInitialState)
+  shuffle(images)
+
+  const handleClick = e => {
+    const id = e.currentTarget.dataset.id
+    if (checkIfIncludes(selected, id)) {
+      setSelected([])
+      setLevel(1)
+      setScore(0)
+      setModal({ message: "You lost!", className: "warning", button: "Try again" })
+      setIsModalOpen(true)
+    }
+    else if (selected.length === (level * 4) - 1) {
+      setLevel(prev => prev + 1)
+      setSelected([])
+      setScore(prev => prev + 1)
+      setModal(modalInitialState)
+      setIsModalOpen(true)
+    }
+    else {
+      setScore(prev => prev + 1)
+      setSelected(prev => [...prev, id])
+    }
+    shuffle(images)
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <Header score={score} level={level} />
+      <Main
+        isLoading={isLoading}
+        images={images}
+        handleClick={handleClick}
+        setLevel={setLevel}
+      />
+      {
+        isModalOpen &&
+        <Modal
+          setIsModalOpen={setIsModalOpen}
+          modal={modal}
+          level={level}
+          score={score}
+        />
+      }
+      <Footer />
+    </>
   );
 }
 
